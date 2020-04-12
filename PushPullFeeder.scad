@@ -181,11 +181,12 @@ $fs=extrusion_width;
 // Tape width
 tape_width=8; // [8:4:24]
 // Tape thickness (not incuding the embossed pockets)
-tape_thickness=0.6;
+tape_thickness=0.6; // [0:0.01:1.5]
 // Embossed pockets portruding from the underside of the tape
-tape_emboss=0;// 250V cap = 1.6
-// Embossed pockets size, across tape, measured on outside
-tape_emboss_size=3.75;
+tape_emboss=0; // [0:0.01:2.4] 
+    // 250V cap = 1.6
+// Embossed pockets size, across tape, measured outside (underside of tape)
+tape_emboss_size=3.75; 
 
 
 /* [ Tape Specification, Advanced ] */
@@ -215,7 +216,7 @@ tape_inset_window_length=18;
 tape_inset_begin=-74;
 // Tape inset end x
 tape_inset_end=6;
-// Tension for tape cover [%]
+// Tension for tape cover (ratio of tape thickness)
 tape_inset_cover_tension=0.2;
 // Radius of the tape on-ramp
 tape_bend_radius_begin=30;
