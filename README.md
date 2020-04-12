@@ -3,7 +3,7 @@ All 3d-Printed Tape&amp;Reel Feeder
 
 <img src="PushPullFeeder_Assembly.gif" />
 
-See https://makr.zone/?p=399
+See [the blog](https://makr.zone/?p=399).
 
 Electrolize-Regular.ttf: Copyright (c) 2011, Cyreal (www.cyreal.org) 
 with Reserved Font Name "Electrolize" This Font Software is licensed 
