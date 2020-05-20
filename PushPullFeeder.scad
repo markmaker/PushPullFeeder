@@ -860,14 +860,14 @@ module spent_tape_chute(cutout=false, play=0) {
                                             d=tape_chute_fixture_strength;
                                             polygon([
                                                 [base_end, 0],
-                                                [base_end, -base_height-d-play],
+                                                [base_end, -base_height-d+play],
                                                 each arc(
                                                 [base_end-tape_chute_fixture_strength/5, 
-                                                    -base_height-d-play],
+                                                    -base_height-d+play],
                                                 [base_end-tape_chute_fixture_strength/5, 
-                                                    -base_height-d-tape_chute_fixture_strength+play],
+                                                    -base_height-d-tape_chute_fixture_strength-play],
                                                 210),
-                                                [base_end, -base_height-d-tape_chute_fixture_strength+play],
+                                                [base_end, -base_height-d-tape_chute_fixture_strength-play],
                                                 each arc(
                                                 [base_end, -base_height-d-tape_chute_fixture_strength],
                                                 [base_end+base_height+d+tape_chute_fixture_strength, 0],
