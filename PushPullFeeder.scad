@@ -2397,7 +2397,7 @@ if (do_base_plate) {
                     if (base_with_reel_holder) {
                         // reel holder cutaways
                         translate([reel_x, reel_y, -3*e])
-                            cylinder_p(d=reel_axle-2*reel_axle_wall, 
+                            cylinder_p(d=reel_axle-2*reel_axle_wall+axle_play, 
                                 h=reel_width+reel_holder_thickness+6*e);
 
                     }
