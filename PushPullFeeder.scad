@@ -1731,8 +1731,7 @@ if (do_reel_counterpart && base_with_reel_holder) {
                         
                         // counter axle
                         translate([reel_x, reel_y, e]) 
-                            cylinder_p(d1=reel_axle-2*reel_axle_wall-phase2_play, 
-                                d2=reel_axle-2*reel_axle_wall-play-phase2_play, 
+                            cylinder_p(d=reel_axle-2*reel_axle_wall-play-phase2_play,
                                 h=spool_axle_groove_z-e);
 
                     }
