@@ -3068,7 +3068,7 @@ if (do_spool_right) {
                 
                 // spool drum clamp
                 translate([debug_eff ? 0 : (spool_inner_diameter/2-spool_outer_diameter/2) + 15, 
-                    debug_eff ? 0 : (spool_inner_diameter/2+spool_outer_diameter/2) + 3, 
+                    debug_eff ? 0 : (spool_inner_diameter/2+spool_outer_diameter/2) + 1,
                     debug_eff ? spool_wall_left : spool_wall_left+spool_wall_right+play]) {
                     linear_extrude(height=tape_width-sprocket_gap-play, convexity=10) {
                         scale([1-spool_drum_clamp_tension, 
