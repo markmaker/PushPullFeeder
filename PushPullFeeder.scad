@@ -1776,7 +1776,6 @@ module extrusion_mount_2D() {
     left_edge_y=extrusion_mount_y-extrusion_mount_h/2+wall;
     left_edge_x=reel_x
         +sqrt(pow(base_begin_r, 2) - pow(left_edge_y-reel_y, 2));
-
     extrusion_mount_contour = [
         [tape_inset_begin+e, -base_height+e],
         each arc(
@@ -1797,8 +1796,6 @@ module extrusion_mount_2D() {
         [extrusion_mount_x-extrusion_mount_w/2+extrusion_mount_tension/2, 
             hanger_y+hanger_dy],
         -hanger_angle),
-        [extrusion_mount_x-extrusion_mount_w/2,
-            extrusion_mount_y+extrusion_mount_h/2],
         each [ for (xx = [0.5:extrusion_mount_w/extrusion_mount_unit]) 
             each arc(
             [extrusion_mount_x-extrusion_mount_w/2 + xx*extrusion_mount_unit
