@@ -1,0 +1,30 @@
+name: Build STL file
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build STL
+        uses: docker://openscad/openscad:2021.01
+        with:
+          entrypoint: openscad
+          args: /github/workspace/PushPullFeeder.scad -o /github/workspace/PushPullFeeder.stl
+      - name: Generate PNG preview
+        uses: docker://openscad/openscad:egl
+        with:
+          entrypoint: openscad
+          args: /github/workspace/PushPullFeeder.scad -o /github/workspace/PushPullFeeder.png
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: PushPullFeeder
+          path: |
+            PushPullFeeder.stl
+            PushPullFeeder.png
