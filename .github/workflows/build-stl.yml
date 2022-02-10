@@ -4,11 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       play:
-        required: true
         type: number
         default: -0.05
       axle_play:
-        required: true
         type: number
         default: -0.02
 
@@ -21,16 +19,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build STL
+      - name: Update play Parameter
+        if: github.event.inputs.play
+        uses: jossef/action-set-json-field@v1
+        with:
+          file: print_params.json
+          field: parameterSets.feeder_print.play
+          value: ${{github.event.inputs.play}}
+      - name: Update axle_play Parameter
+        if: github.event.inputs.axle_play
+        uses: jossef/action-set-json-field@v1
+        with:
+          file: print_params.json
+          field: parameterSets.feeder_print.play
+          value: ${{github.event.inputs.axle_play}}
+      - name: Build PushPullFeeder STL
         uses: docker://openscad/openscad:2021.01
         with:
           entrypoint: openscad
-          args: /github/workspace/PushPullFeeder.scad -o /github/workspace/PushPullFeeder.stl
+          args: /github/workspace/PushPullFeeder.scad --enable=customizer -p /github/workspace/print_params.json -P feeder_print -o /github/workspace/TestPrint.stl
       - name: Build Test Print STL
         uses: docker://openscad/openscad:2021.01
         with:
           entrypoint: openscad
-          args: /github/workspace/PushPullFeeder.scad --enable=customizer -p /github/workspace/test_print.json -P test_print -o /github/workspace/TestPrint.stl
+          args: /github/workspace/PushPullFeeder.scad --enable=customizer -p /github/workspace/print_params.json -P test_print -o /github/workspace/TestPrint.stl
       - name: Generate PNG preview
         uses: docker://openscad/openscad:egl
         with:

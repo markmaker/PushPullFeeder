@@ -1,5 +1,20 @@
 {
     "parameterSets": {
+       "feeder_print": {
+            "make_base_plate": "true",
+            "make_blocking_spring": "true",
+            "make_friction_wheel": "true",
+            "make_handle_lock": "true",
+            "make_inset": "true",
+            "make_lever": "true",
+            "make_lever_actuator": "false",
+            "make_nozzle_adapter": "false",
+            "make_reel_counterpart": "true",
+            "make_spool_left": "true",
+            "make_spool_right": "true",
+            "make_tape_chute": "true",
+            "make_test_print": "false"
+       },
        "test_print": {
             "make_base_plate": "false",
             "make_blocking_spring": "false",
@@ -14,7 +29,7 @@
             "make_spool_right": "false",
             "make_tape_chute": "false",
             "make_test_print": "true"
-       }
+        }
     },
     "fileFormatVersion": "1"
 }
