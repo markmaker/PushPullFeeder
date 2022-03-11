@@ -180,6 +180,9 @@ $fs=extrusion_width;
 
 // Tape width
 tape_width=8; // [8:4:24]
+// Tape width adjustment for inset.
+tape_width_adjust=0.0; // [-0.25:0.01:0.25]
+tape_width_eff=tape_width+tape_width_adjust;
 // Tape thickness (not incuding the embossed pockets)
 tape_thickness=0.6; // [0:0.01:1.5]
 // Embossed pockets portruding from the underside of the tape
@@ -269,6 +272,9 @@ tape_chute_pivot_debug=false;
 tape_chute_play=layer_height;
 // Tension angle of the first bend (the bend is coiled up that much)
 tape_chute_tension_angle = 15;
+// Tape width adjustment for spent tape chute. Should be fixed at maximum tape_width_adjust = 0.25mm.
+tape_width_adjust_chute=0.25;
+tape_width_eff_chute=tape_width+tape_width_adjust_chute;
                 
 /* [ Base Plate] */
 
@@ -758,9 +764,9 @@ tape_chute_contour = [
     [inset_edge-bevel_z, emboss+tape_width+reel_wall+e*2],
     [-inset_edge+bevel_z, emboss+tape_width+reel_wall+e*2],
     [-inset_edge, emboss+tape_width+reel_wall-bevel_z],
-    [-inset_edge, emboss+tape_width+bevel_z],
-    [-inset_edge+bevel_z, emboss+tape_width],
-    [0, emboss+tape_width],
+    [-inset_edge, emboss+tape_width_eff_chute+bevel_z],
+    [-inset_edge+bevel_z, emboss+tape_width_eff_chute],
+    [0, emboss+tape_width_eff_chute],
     [0, emboss-tape_chute_play],
     [-emboss+tape_chute_play, 0],
     [-emboss+tape_chute_play, -base_thickness+emboss+bevel_z],
@@ -835,8 +841,8 @@ module spent_tape_chute(cutout=false, play=0) {
                 rotate([0, 0, debug_a*tape_chute_pivot_angle]) 
                 translate([-tape_chute_fixture_x, -tape_chute_fixture_y, 0]) {
                     // side structures and pivot leg
-                    translate([0, 0, emboss+tape_width]) {
-                        beveled_extrude(height=reel_wall+e*2, angle=cutout?135:45, bevel=bevel_z, convexity=6) {
+                    translate([0, 0, emboss+tape_width_eff_chute]) {
+                        beveled_extrude(height=reel_wall-tape_width_adjust_chute+e*2, angle=cutout?135:45, bevel=bevel_z, convexity=6) {
                             pivot_chute(cutout) {
                                 intersection() {
                                     union() {
@@ -923,9 +929,9 @@ module spent_tape_chute(cutout=false, play=0) {
                 translate([-base_end, 0, 0]) {
                     hull() {
                         translate([base_end+bevel_dx, -tape_max_height-bevel_dy, emboss-tape_chute_play])
-                            cube([e, tape_max_height, tape_width+tape_chute_play]);
+                            cube([e, tape_max_height, tape_width_eff_chute+tape_chute_play]);
                         translate([base_end-1, -tape_max_height-extrusion_width, 0])
-                            cube([1, tape_max_height+inset_edge, emboss+tape_width+bevel_z+layer_height]);
+                            cube([1, tape_max_height+inset_edge, emboss+tape_width_eff_chute+bevel_z+layer_height]);
                         /*
                                 [base_end-e, inset_edge-extrusion_width],
                                 [base_end+inset_edge*4, -inset_edge],
@@ -2404,46 +2410,46 @@ if (do_base_plate) {
         }
     }
 }
-tape_pocket_center=(tape_width+sprocket_gap)/2;
+tape_pocket_center=(tape_width_eff+sprocket_gap)/2;
 tape_support_knee=min(tape_emboss-extrusion_width, extrusion_width); 
-tape_margin=(tape_width-sprocket_gap-tape_emboss_size)/2-layer_height;
+tape_margin=(tape_width_eff-sprocket_gap-tape_emboss_size)/2-layer_height;
 tape_inset_support=false;//(tape_emboss > extrusion_width*2);
 tape_45_margin=tape_margin-tape_emboss;
 tape_margin_eff=tape_inset_support ? tape_margin : max(-thorn_groove, tape_45_margin); // just as good as possible
 
 function inset_profile(cover=true) = [
     [sprocket_margin, -base_height-e],
-    [tape_width+reel_wall-e, -base_height-e],
+    [tape_width_eff+reel_wall-e, -base_height-e],
     each [ if (cover) each [
-        [tape_width+reel_wall-e, inset_edge],
+        [tape_width_eff+reel_wall-e, inset_edge],
         [0, inset_edge-tape_thickness*tape_inset_cover_tension],
         [0, -tape_thickness*tape_inset_cover_tension],
         each arc(
-        [tape_width-inset_edge, 0],
-        [tape_width, 0],
+        [tape_width_eff-inset_edge, 0],
+        [tape_width_eff, 0],
         -135),
     ] else each [
-        [tape_width+reel_wall-e, 0],
+        [tape_width_eff+reel_wall-e, 0],
     ]
     ],
-    [tape_width, 0],
+    [tape_width_eff, 0],
     
-    [tape_width, -tape_thickness],
-    [tape_width-tape_margin, -tape_thickness],
+    [tape_width_eff, -tape_thickness],
+    [tape_width_eff-tape_margin, -tape_thickness],
     
     /* does not work in the slicer, unfortunately (wont 90° bridge it)
     // support, if needed and possible
     each [ if (tape_inset_support) each [ 
-    [tape_width-tape_margin, -tape_thickness],
+    [tape_width_eff-tape_margin, -tape_thickness],
     [tape_pocket_center, -tape_thickness-tape_support_knee],
     [sprocket_gap+tape_margin+e, -tape_thickness],
     [sprocket_gap+tape_margin+e, -tape_thickness-extrusion_width],
     [tape_pocket_center, -tape_thickness-extrusion_width-tape_support_knee],
-    [tape_width-tape_margin, -tape_thickness-extrusion_width],
+    [tape_width_eff-tape_margin, -tape_thickness-extrusion_width],
     ]],
     */
     
-    [tape_width-tape_margin, -tape_thickness-tape_emboss],
+    [tape_width_eff-tape_margin, -tape_thickness-tape_emboss],
     [sprocket_gap+tape_margin, -tape_thickness-tape_emboss],
     [sprocket_gap+tape_margin_eff, -tape_thickness],
     //[sprocket_margin-tape_margin, -tape_thickness],
@@ -2544,7 +2550,7 @@ if (do_inset) {
                                 }
                                 translate([0, 0, -e]) {
                                     // pick location window
-                                    linear_extrude(height=tape_width-layer_height+e, convexity=4) {
+                                    linear_extrude(height=tape_width_eff-layer_height+e, convexity=4) {
                                         polygon([
                                                 [cover_tape_edge+tape_inset_window_length, inset_edge+e],
                                                 [cover_tape_edge+tape_inset_window_length+inset_edge, 
