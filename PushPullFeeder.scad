@@ -748,7 +748,10 @@ inset_height=tape_width+reel_wall-layer_height;
 inset_flipped = ! debug_eff;
 //side_ramp=reel_wall+min(tape_emboss, tape_min_margin);
 
-tape_chute_fixture_x=extrusion_mount_x+pick_offset+extrusion_mount_w/2+extrusion_mount_strength/2+fixture_axle/2;
+standard_tape_chute_fixture_x =  extrusion_mount_edge_x+extrusion_mount_unit+extrusion_mount_strength/2+fixture_axle/2;
+tape_chute_fixture_x= (pick_offset > (extrusion_mount_w - extrusion_mount_unit)) ?
+    standard_tape_chute_fixture_x :
+    standard_tape_chute_fixture_x + (extrusion_mount_w - extrusion_mount_unit) - pick_offset;
 tape_chute_fixture_y=-base_height-fixture_axle*0.75;
 tape_chute_fixture_strength=fixture_axle*0.6;
 tape_chute_end_angle=90-tape_chute_angle;
@@ -1911,6 +1914,12 @@ module extrusion_mount_2D() {
 
 if (do_base_plate) {
     // base plate and (optionally) reel holder
+    
+    //Warn against extending the feeder without using a wider extrusion mount
+    bad_offset_mount_config = (pick_offset > 5.0) && (extrusion_mount_w < 30.0) && extrusion_mount_enabled;
+    if(bad_offset_mount_config){
+        echo("WARNING.  Pick offset extends the feeder.  It is recommended to use a wider extrusion mount to prevent instability.  WARNING");
+    };
     
     if (base_with_reel_holder) {
         // draw reel for debugging
