@@ -278,6 +278,8 @@ tape_width_eff_chute=tape_width+tape_width_adjust_chute;
                 
 /* [ Base Plate] */
 
+// Pick location offset. Tape hole distance increments
+pick_offset=0; // [0:4:40]
 // Minimum base plate thickness, will be rounded up to form integral mm overall feeder size (minus one layer)
 base_min_thickness=1.6;
 base_thickness=ceil(base_min_thickness+tape_reel_max_width_delta)
@@ -288,7 +290,7 @@ base_margin=3.5;
 base_begin=-84;
 // Base plate end in x
 base_end=14;
-base_length=base_end - base_begin;
+base_length=base_end - (base_begin-pick_offset);
 // Base plate height below tape surface
 base_height=7;
 // Base plate edge on sprocket side of tape
@@ -468,7 +470,7 @@ thorn_diameter=sprocket_hole_diameter*thorn_diameter_ratio;
 // Dog aproximative offset from pick location (will be aligned with nearest sprocket pitch)
 dog_offset=-24; // [-34:4:-2]
 // align the dog with the sprockets
-dog_thorn_nominal_x=(round(dog_offset/sprocket_pitch) - 0.5)*sprocket_pitch;
+dog_thorn_nominal_x=(round((dog_offset-pick_offset)/sprocket_pitch) - 0.5)*sprocket_pitch;
 dog_nominal_x=dog_thorn_nominal_x-dog_strength/2+thorn_diameter/2;
 // Thorn pointedness, relative to diameter
 thorn_pointedness=0.67; // [0.33:0.01:0.99]
@@ -477,7 +479,7 @@ thorn_overhang=0.025; // [-0.5:0.01:0.5]
 // Dog nominal position in y
 dog_nominal_y=0;
 dog_relaxed_pos=spring_relaxed_endpoint(
-    [lever_axle_x+lever_tape_x, lever_axle_y+lever_tape_y],
+    [(lever_axle_x-pick_offset)+lever_tape_x, lever_axle_y+lever_tape_y],
     [dog_nominal_x, dog_nominal_y],
     lever_dog_spring_bend, 
     dog_tension_angle);
@@ -524,7 +526,7 @@ extrusion_mount_edge_x=-50;     // in my setup, the nozzle tip can just about re
 // Extrusion mount top edge (from pick location)
 extrusion_mount_edge_y=-20;
 // Extrusion center position in x
-extrusion_mount_x=extrusion_mount_edge_x+extrusion_mount_w/2; 
+extrusion_mount_x=extrusion_mount_edge_x-pick_offset+extrusion_mount_w/2; 
 // Extrusion center position in y
 extrusion_mount_y=extrusion_mount_edge_y-extrusion_mount_h/2;
 // Hollow out the extrusion mount (left side)
@@ -622,7 +624,7 @@ nozzle_adapter_strength=wall+extrusion_width;
 nozzle_travel_z=lever_axle_diameter+wall; // nozzle tip vertical travel when lever is inserted
 nozzle_actuation_z=nozzle_safe_z-nozzle_travel_z; // nozzle tip height at which the lever is actuated
 nozzle_actuation_travel=lever_axle_diameter+6.5; // nozzle tip horizontal travel when lever is actuated
-nozzle_actuation_dist=-nozzle_actuation_travel-lever_axle_x-lever_feed_x;
+nozzle_actuation_dist=-nozzle_actuation_travel-(lever_axle_x-pick_offset)-lever_feed_x;
              //nozzle_mount_diameter/2+nozzle_plate_portrusion;
              
 nozzle_actuation_dist_z=nozzle_actuation_z+nozzle_shaft_z-lever_feed_y-lever_axle_y;
@@ -666,14 +668,14 @@ reel_axle_wall=(reel_axle-lever_axle_diameter)/2;
 // position of the reel axle within the constraints
 reel_x=extrusion_mount_x-extrusion_mount_w/2-reel_dist-reel_diameter/2;
 reel_y=spool_axle_y-sqrt(pow(reel_diameter/2+spool_outer_diameter/2+reel_dist_spool, 2)
-    -pow(spool_axle_x-reel_x, 2));
+    -pow((spool_axle_x-pick_offset)-reel_x, 2));
 
 hanger_reel_axle_angle= 
     atan2(extrusion_mount_y+extrusion_mount_h/2-reel_y, 
         extrusion_mount_x+extrusion_mount_w/2-reel_x); // approx
 hanger_connect_x = extrusion_mount_enabled ? 
     extrusion_mount_x-extrusion_mount_w/2-reel_holder_strength/2-extrusion_mount_strength/2
-     : block_axle_x; 
+     : (block_axle_x-pick_offset); 
 hanger_connect_y = extrusion_mount_enabled ? 
     extrusion_mount_y-extrusion_mount_h/2+reel_holder_strength/2+extrusion_mount_strength*1.25
     : block_axle_y;
@@ -686,8 +688,8 @@ hanger_angle = atan2(hanger_dy, hanger_dx)*2;
 // some spool data
 spool_ratchet_shield=ratchet_inner_diameter-spring_strength;
 spool_dx=-spool_ratchet_shield/2+reel_holder_strength/2;
-spool_reel_r=distance(spool_axle_x-reel_x, spool_axle_y-reel_y);
-spool_reel_a=atan2(spool_axle_y-reel_y, spool_axle_x-reel_x);
+spool_reel_r=distance((spool_axle_x-pick_offset)-reel_x, spool_axle_y-reel_y);
+spool_reel_a=atan2(spool_axle_y-reel_y, (spool_axle_x-pick_offset)-reel_x);
 spool_reel_d=spool_ratchet_shield/2-reel_holder_strength/2;
 spool_reel_da=asin(spool_reel_d/spool_reel_r/2)*2;
 spool_reel_connect_x = reel_x+spool_reel_r*cos(spool_reel_a+spool_reel_da);
@@ -697,7 +699,7 @@ spool_axle_groove_z=base_thickness-emboss+spool_width+2*layer_height;
 spool_axle_groove_width=reel_holder_thickness+reel_width-spool_axle_groove_z; 
 
 dog_slant=dog_slant_ratio*(lever_axle_y+lever_tape_y-dog_nominal_y)
-    /(dog_nominal_x-lever_axle_x-lever_tape_x);
+    /(dog_nominal_x-(lever_axle_x-pick_offset)-lever_tape_x);
 dog_slant_c=sqrt(1-dog_slant*dog_slant);
                 
 // TODO: do real contour without offset(+/-e) hack
@@ -746,7 +748,10 @@ inset_height=tape_width+reel_wall-layer_height;
 inset_flipped = ! debug_eff;
 //side_ramp=reel_wall+min(tape_emboss, tape_min_margin);
 
-tape_chute_fixture_x=extrusion_mount_x+extrusion_mount_w/2+extrusion_mount_strength/2+fixture_axle/2;
+standard_tape_chute_fixture_x =  extrusion_mount_edge_x+extrusion_mount_unit+extrusion_mount_strength/2+fixture_axle/2;
+tape_chute_fixture_x= (pick_offset > (extrusion_mount_w - extrusion_mount_unit)) ?
+    standard_tape_chute_fixture_x :
+    standard_tape_chute_fixture_x + (extrusion_mount_w - extrusion_mount_unit) - pick_offset;
 tape_chute_fixture_y=-base_height-fixture_axle*0.75;
 tape_chute_fixture_strength=fixture_axle*0.6;
 tape_chute_end_angle=90-tape_chute_angle;
@@ -1176,7 +1181,7 @@ module handle_lock(play=0, cutout=false, lock=true) {
                                                     // lever axle
                                                     intersection() {
                                                         rotate(-handle_lock_angle-travel_angle) 
-                                                            translate([lever_axle_x-handle_lock_axle_x,
+                                                            translate([(lever_axle_x-pick_offset)-handle_lock_axle_x,
                                                                 lever_axle_y-handle_lock_axle_y])
                                                                 circle_p(d=lever_axle_diameter
                                                                     +2*handle_pull_strength);
@@ -1187,7 +1192,7 @@ module handle_lock(play=0, cutout=false, lock=true) {
                                                     // spool connector
                                                     intersection() {
                                                         rotate(-handle_lock_angle) 
-                                                            translate([spool_axle_x-handle_lock_axle_x,
+                                                            translate([(spool_axle_x-pick_offset)-handle_lock_axle_x,
                                                                 spool_axle_y-handle_lock_axle_y])
                                                                 circle_p(d=reel_holder_strength
                                                                     +2*handle_pull_strength);
@@ -1198,7 +1203,7 @@ module handle_lock(play=0, cutout=false, lock=true) {
                                                     // lever knob
                                                     intersection() {
                                                         rotate(-handle_lock_angle-travel_angle) 
-                                                            translate([lever_axle_x+lever_feed_x-handle_lock_axle_x,
+                                                            translate([(lever_axle_x-pick_offset)+lever_feed_x-handle_lock_axle_x,
                                                                 lever_axle_y+lever_feed_y-handle_lock_axle_y])
                                                                 circle_p(d=lever_axle_diameter
                                                                     +2*handle_pull_strength);
@@ -1216,17 +1221,17 @@ module handle_lock(play=0, cutout=false, lock=true) {
                                                     // cutouts of "arounds"
                                                     // spool connector
                                                     rotate(-handle_lock_angle) 
-                                                        translate([spool_axle_x-handle_lock_axle_x,
+                                                        translate([(spool_axle_x-pick_offset)-handle_lock_axle_x,
                                                             spool_axle_y-handle_lock_axle_y])
                                                             circle_p(d=reel_counterpart_connector+play*2);
                                                     // lever axle
                                                     rotate(-handle_lock_angle-travel_angle) 
-                                                        translate([lever_axle_x-handle_lock_axle_x,
+                                                        translate([(lever_axle_x-pick_offset)-handle_lock_axle_x,
                                                             lever_axle_y-handle_lock_axle_y])
                                                             circle_p(d=lever_axle_outer_diameter+play*2);
                                                     // lever knob
                                                     rotate(-handle_lock_angle-travel_angle) 
-                                                        translate([lever_axle_x+lever_feed_x-handle_lock_axle_x,
+                                                        translate([(lever_axle_x-pick_offset)+lever_feed_x-handle_lock_axle_x,
                                                             lever_axle_y+lever_feed_y-handle_lock_axle_y])
                                                             circle_p(d=lever_axle_diameter
                                                                 -nozzle_play+play);
@@ -1310,7 +1315,7 @@ if (do_handle_lock) {
             debug_eff ? handle_lock_axle_y : reel_y+cos(hanger_reel_axle_angle)*(reel_washer+gap*2)*2, 
             debug_eff ? lever_thickness+e : 0]) {
             rotate([0, 0, 
-                    debug_eff ? 0 : 90+atan2(spool_axle_y-reel_y, spool_axle_x-reel_x)]) {
+                    debug_eff ? 0 : 90+atan2(spool_axle_y-reel_y, (spool_axle_x-pick_offset)-reel_x)]) {
                 
                 translate([0, debug_eff ? 0 : -20, 0]) rotate([0, 0, 
                     debug_eff ? 0 : 
@@ -1367,8 +1372,8 @@ function slide_on_contour(play=0) = [
     
 if (do_nozzle_adapter || do_lever_actuator || ((do_lever || do_base_plate) && debug_eff)) {
     // nozzle adapter
-    reel_x=tape_inset_begin-reel_diameter/2-8;
-    reel_y=-sin(atan2(reel_diameter/2+spool_outer_diameter/2, reel_x-spool_axle_x))*reel_diameter/2;
+    reel_x=(tape_inset_begin-pick_offset)-reel_diameter/2-8;
+    reel_y=-sin(atan2(reel_diameter/2+spool_outer_diameter/2, reel_x-(spool_axle_x-pick_offset)))*reel_diameter/2;
     
     // actuator thickness (from nominal 8mm tape)
     thickness=reel_wall+(8/2)-lever_actuation_delta-2*nozzle_play;
@@ -1703,7 +1708,7 @@ if (do_reel_counterpart && base_with_reel_holder) {
             debug_eff ? 0 : cos(hanger_reel_axle_angle)*(reel_washer+3*gap), 
             debug_eff ? reel_holder_thickness+reel_width-reel_wall : 0]) {
             
-            angle=atan2(spool_axle_y-reel_y, spool_axle_x - reel_x);
+            angle=atan2(spool_axle_y-reel_y, (spool_axle_x-pick_offset) - reel_x);
             translate([reel_x, reel_y, 0]) 
                 rotate([0, debug_eff ? 180 : 0, 0]) 
                 rotate([0, 0, (debug_eff ? 180-angle*2 : 0)]) 
@@ -1727,10 +1732,10 @@ if (do_reel_counterpart && base_with_reel_holder) {
                                 hull() {
                                     translate([reel_x, reel_y]) 
                                         circle_p(d=reel_holder_strength);
-                                    translate([spool_axle_x, spool_axle_y]) 
+                                    translate([(spool_axle_x-pick_offset), spool_axle_y]) 
                                         circle_p(d=reel_holder_strength);
                                 }
-                                translate([spool_axle_x, spool_axle_y]) 
+                                translate([(spool_axle_x-pick_offset), spool_axle_y]) 
                                     circle_p(d=reel_counterpart_connector);
                             }
                         }
@@ -1750,7 +1755,7 @@ if (do_reel_counterpart && base_with_reel_holder) {
                         if (reel_spool_connect) {
                             hull() {
                                 // spool axle groove
-                                translate([spool_axle_x, 
+                                translate([(spool_axle_x-pick_offset), 
                                     spool_axle_y, 
                                     reel_holder_thickness-spool_axle_groove_width-e]) {
                                     translate([0, 0, 0]) 
@@ -1778,18 +1783,18 @@ if (do_reel_counterpart && base_with_reel_holder) {
 module extrusion_mount_2D() {
         
     nut_y=extrusion_mount_y+extrusion_mount_h/2-extrusion_mount_unit/2;
-    base_begin_r = distance(base_begin-reel_x, -base_height-reel_y);
+    base_begin_r = distance((base_begin-pick_offset)-reel_x, -base_height-reel_y);
     left_edge_y=extrusion_mount_y-extrusion_mount_h/2+wall;
     left_edge_x=reel_x
         +sqrt(pow(base_begin_r, 2) - pow(left_edge_y-reel_y, 2));
 
     extrusion_mount_contour = [
-        [tape_inset_begin+e, -base_height+e],
+        [(tape_inset_begin-pick_offset)+e, -base_height+e],
         each arc(
-        [base_begin, -base_height+e],
+        [(base_begin-pick_offset), -base_height+e],
         [left_edge_x, left_edge_y],
         atan2(left_edge_y-reel_y, left_edge_x-reel_x)-
-        atan2(-base_height-reel_y, base_begin-reel_x)),
+        atan2(-base_height-reel_y, (base_begin-pick_offset)-reel_x)),
         
         each arc(
         [left_edge_x, left_edge_y],
@@ -1859,7 +1864,7 @@ module extrusion_mount_2D() {
                 chamfer=true) {
                 intersection() {
                     polygon([
-                        [tape_inset_begin, 
+                        [(tape_inset_begin-pick_offset), 
                             -base_height+extrusion_mount_strength*strength_scale],
                         each extrusion_mount_contour,
                         [tape_inset_end, 
@@ -1882,9 +1887,9 @@ module extrusion_mount_2D() {
                     -strength_r) {
                 intersection() {
                     polygon(extrusion_mount_contour);
-                    translate([base_begin,
+                    translate([(base_begin-pick_offset),
                         extrusion_mount_y-extrusion_mount_h/2])
-                        square([handle_lock_axle_x-handle_lock_diameter/2-base_begin,
+                        square([handle_lock_axle_x-handle_lock_diameter/2-(base_begin-pick_offset),
                             -extrusion_mount_y+extrusion_mount_h/2]);
                 }
             }
@@ -1909,6 +1914,12 @@ module extrusion_mount_2D() {
 
 if (do_base_plate) {
     // base plate and (optionally) reel holder
+    
+    //Warn against extending the feeder without using a wider extrusion mount
+    bad_offset_mount_config = (pick_offset > 5.0) && (extrusion_mount_w < 30.0) && extrusion_mount_enabled;
+    if(bad_offset_mount_config){
+        echo("WARNING.  Pick offset extends the feeder.  It is recommended to use a wider extrusion mount to prevent instability.  WARNING");
+    };
     
     if (base_with_reel_holder) {
         // draw reel for debugging
@@ -1953,12 +1964,12 @@ if (do_base_plate) {
                                     hull() {
                                         translate([spool_reel_connect_x, spool_reel_connect_y]) 
                                             circle_p(d=reel_holder_strength);
-                                        translate([spool_reel_connect_x-spool_axle_x+reel_x, 
+                                        translate([spool_reel_connect_x-(spool_axle_x-pick_offset)+reel_x, 
                                             spool_reel_connect_y-spool_axle_y+reel_y]) 
                                             circle_p(d=reel_holder_strength);
                                         translate([reel_x, reel_y]) 
                                             circle_p(d=reel_holder_strength);
-                                        translate([tape_inset_begin, min(spool_axle_y, lever_axle_y)]) 
+                                        translate([(tape_inset_begin-pick_offset), min(spool_axle_y, lever_axle_y)]) 
                                             circle_p(d=reel_holder_strength);
                                         translate([hanger_connect_x, hanger_connect_y]) 
                                             circle_p(d=reel_holder_strength);
@@ -1969,7 +1980,7 @@ if (do_base_plate) {
                                     offset(r=reel_holder_strength*0.2) offset(delta=-reel_holder_strength*0.7) {
                                         intersection() {
                                             hull() {
-                                                translate([spool_axle_x, spool_axle_y]) 
+                                                translate([(spool_axle_x-pick_offset), spool_axle_y]) 
                                                     circle_p(d=e);
                                                 translate([reel_x, reel_y]) 
                                                     circle_p(d=e);
@@ -1985,15 +1996,15 @@ if (do_base_plate) {
                                         // hollowing-out
                                         difference() {
                                             polygon([
-                                                [base_begin, 0],
-                                                [base_begin, 
+                                                [(base_begin-pick_offset), 0],
+                                                [(base_begin-pick_offset), 
                                                     extrusion_mount_y-extrusion_mount_h/2],
                                                 [base_end, 
                                                     extrusion_mount_y-extrusion_mount_h/2],
                                                 [base_end, 0],
                                             ]);
                                             translate([reel_x, reel_y])
-                                                circle_p(r=distance(reel_x-base_begin, reel_y-base_bottom)
+                                                circle_p(r=distance(reel_x-(base_begin-pick_offset), reel_y-base_bottom)
                                                     +bevel_z*2);
                                         }
                                     }
@@ -2016,17 +2027,17 @@ if (do_base_plate) {
                         bevel=bevel_z, convexity=10) {
                         union() {
                             // lever axle
-                            translate([lever_axle_x, lever_axle_y]) 
+                            translate([(lever_axle_x-pick_offset), lever_axle_y]) 
                                 circle_p(d=lever_axle_diameter);
                             
                             // spool axle
-                            translate([spool_axle_x, spool_axle_y]) 
+                            translate([(spool_axle_x-pick_offset), spool_axle_y]) 
                                 circle_p(d=spool_axle_diameter);
                             
                             // tape inset fixture
                             polygon([
-                                [tape_inset_begin-tape_inset_slant, -tape_max_height],
-                                [tape_inset_begin, -base_height],
+                                [(tape_inset_begin-pick_offset)-tape_inset_slant, -tape_max_height],
+                                [(tape_inset_begin-pick_offset), -base_height],
                                 [tape_inset_end, -base_height],
                                 [tape_inset_end+tape_inset_slant, -tape_max_height]
                             ]);
@@ -2042,14 +2053,14 @@ if (do_base_plate) {
                     beveled_extrude(height=base_thickness-emboss+ratchet_thickness-layer_height) {
                         block_angle=lever_dog_angle-1.2*sprocket_pitch*180/PI/lever_dog_leverage;
                         difference() {
-                            translate([lever_axle_x+lever_dog_leverage*cos(block_angle)+lever_node*sin(block_angle), 
+                            translate([(lever_axle_x-pick_offset)+lever_dog_leverage*cos(block_angle)+lever_node*sin(block_angle), 
                                     lever_axle_y+lever_dog_leverage*sin(block_angle)-lever_node*cos(block_angle)]) 
                                         circle_p(d=lever_node*2);
                             hull() {
-                                translate([lever_axle_x+lever_dog_leverage*cos(block_angle), 
+                                translate([(lever_axle_x-pick_offset)+lever_dog_leverage*cos(block_angle), 
                                     lever_axle_y+lever_dog_leverage*sin(block_angle)]) 
                                         circle_p(d=lever_node);
-                                translate([lever_axle_x, lever_axle_y]) 
+                                translate([(lever_axle_x-pick_offset), lever_axle_y]) 
                                     circle_p(d=lever_axle_diameter);
                             }
                         }
@@ -2058,17 +2069,17 @@ if (do_base_plate) {
                     beveled_extrude(height=base_thickness+tape_width, convexity=10) {
                         difference () {
                             hull() {
-                                translate([block_axle_x, block_axle_y]) 
+                                translate([(block_axle_x-pick_offset), block_axle_y]) 
                                     circle_p(d=fixture_axle+2*wall);
                             }
                             union() {
                                 // cutout ratchet blocking spring fixture
-                                translate([block_axle_x, block_axle_y]) 
+                                translate([(block_axle_x-pick_offset), block_axle_y]) 
                                     circle_p(d=fixture_axle, $fn=6);
                                 polygon(points=[
-                                        [block_axle_x, block_axle_y],
-                                        [block_axle_x-fixture_axle, block_axle_y+fixture_axle/2],
-                                        [block_axle_x-fixture_axle, block_axle_y-fixture_axle/2]
+                                        [(block_axle_x-pick_offset), block_axle_y],
+                                        [(block_axle_x-pick_offset)-fixture_axle, block_axle_y+fixture_axle/2],
+                                        [(block_axle_x-pick_offset)-fixture_axle, block_axle_y-fixture_axle/2]
                                     ]);
                             }
                         }
@@ -2097,13 +2108,13 @@ if (do_base_plate) {
                                 margin = max(lever_axle_outer_diameter/2, base_margin);
                                 max_y=max(lever_axle_y+margin, spool_axle_y+reel_holder_strength/2);
                                 max_spool_dy = max_y-spool_axle_y-reel_holder_strength/2;
-                                translate([spool_axle_x, spool_axle_y]) 
+                                translate([(spool_axle_x-pick_offset), spool_axle_y]) 
                                         circle_p(d=spool_ratchet_shield);
                                 polygon([
-                                    [spool_axle_x, spool_axle_y+reel_holder_strength/2+max_spool_dy],
-                                    [min(spool_axle_x+spool_dx-reel_holder_strength/2, base_begin), 
+                                    [(spool_axle_x-pick_offset), spool_axle_y+reel_holder_strength/2+max_spool_dy],
+                                    [min((spool_axle_x-pick_offset)+spool_dx-reel_holder_strength/2, (base_begin-pick_offset)), 
                                         spool_axle_y],
-                                    [min(spool_axle_x+spool_dx-reel_holder_strength/2, base_begin), 
+                                    [min((spool_axle_x-pick_offset)+spool_dx-reel_holder_strength/2, (base_begin-pick_offset)), 
                                         base_bottom],
                                     [base_end, base_bottom],
                                     [base_end, 0],
@@ -2111,14 +2122,14 @@ if (do_base_plate) {
                                     each arc(
                                     [dog_nominal_x+dog_strength/2+dog_blocker_strength, 
                                         dog_nominal_y+dog_height1-dog_blocker_strength],
-                                    [lever_axle_x+margin, lever_axle_y],
+                                    [(lever_axle_x-pick_offset)+margin, lever_axle_y],
                                     -90),
                                     each arc(
-                                    [lever_axle_x+margin, lever_axle_y],
-                                    [lever_axle_x, lever_axle_y+margin],
+                                    [(lever_axle_x-pick_offset)+margin, lever_axle_y],
+                                    [(lever_axle_x-pick_offset), lever_axle_y+margin],
                                     90),
-                                    [lever_axle_x, lever_axle_y+margin],
-                                    [spool_axle_x+reel_holder_strength/2+max_spool_dy, 
+                                    [(lever_axle_x-pick_offset), lever_axle_y+margin],
+                                    [(spool_axle_x-pick_offset)+reel_holder_strength/2+max_spool_dy, 
                                         spool_axle_y+reel_holder_strength/2+max_spool_dy],
                                 ]);
                                 
@@ -2127,13 +2138,13 @@ if (do_base_plate) {
                             }
                             union() {
                                 translate([reel_x, reel_y])
-                                    circle_p(r=distance(reel_x-base_begin, reel_y-base_bottom)); 
+                                    circle_p(r=distance(reel_x-(base_begin-pick_offset), reel_y-base_bottom)); 
                             }
                         }
                     }
                     
                     // anti friction ring
-                    translate([lever_axle_x, lever_axle_y, base_thickness-emboss-e]) {
+                    translate([(lever_axle_x-pick_offset), lever_axle_y, base_thickness-emboss-e]) {
                         cylinder_p(h=layer_height+e, d=lever_axle_diameter+2*base_anti_friction_ring);
                     }
                     
@@ -2143,10 +2154,10 @@ if (do_base_plate) {
                             // tape side
                             y0 = -base_height;
                             tape_lane_profile = [
-                                [base_begin+base_length, y0],
+                                [(base_begin-pick_offset)+base_length, y0],
                                 each arc(
-                                [base_begin+base_length, 0],
-                                [base_begin+base_length-base_tape_edge, base_tape_edge],
+                                [(base_begin-pick_offset)+base_length, 0],
+                                [(base_begin-pick_offset)+base_length-base_tape_edge, base_tape_edge],
                                 90),
                             
                                 [dog_nominal_x+dog_strength/2+dog_blocker_strength+dog_slant*base_tape_edge, 
@@ -2164,10 +2175,10 @@ if (do_base_plate) {
                                     inset_edge+e],
                             
                                 each arc(
-                                [base_begin+base_tape_edge, base_tape_edge],
-                                [base_begin, 0],
+                                [(base_begin-pick_offset)+base_tape_edge, base_tape_edge],
+                                [(base_begin-pick_offset), 0],
                                 90),
-                                [base_begin, y0],
+                                [(base_begin-pick_offset), y0],
                                 ];
                             polygon(tape_lane_profile);
                         }
@@ -2186,10 +2197,10 @@ if (do_base_plate) {
                                 90),
                             
                                 each arc(
-                                [base_begin+base_tape_edge, 0],
-                                [base_begin, -base_tape_edge],
+                                [(base_begin-pick_offset)+base_tape_edge, 0],
+                                [(base_begin-pick_offset), -base_tape_edge],
                                 90),
-                                [base_begin, y0],
+                                [(base_begin-pick_offset), y0],
                                 ];
                             polygon(tape_ledge_profile);
                         }
@@ -2202,7 +2213,7 @@ if (do_base_plate) {
                     // logo
                     if (logo_enabled) {
                         if (logo_size > 0) {
-                            translate([logo_x, logo_y, -e]) {
+                            translate([(logo_x-pick_offset), logo_y, -e]) {
                                 render_preview(convexity=20) 
                                 linear_extrude(height=logo_etch+e) {
                                     mirror([1, 0, 0]) {
@@ -2217,7 +2228,7 @@ if (do_base_plate) {
                             }
                         }
                         if (logo_text != "") {
-                            translate([logo_text_x, logo_text_y, -e]) {
+                            translate([(logo_text_x-pick_offset), logo_text_y, -e]) {
                                 render_preview(convexity=20) 
                                 linear_extrude(height=logo_etch+e) {
                                     mirror([1, 0, 0]) {
@@ -2231,7 +2242,7 @@ if (do_base_plate) {
                         }
                     }
                     if (logo_tag != "") {
-                        translate([logo_tag_x, logo_tag_y, -e]) {
+                        translate([(logo_tag_x-pick_offset), logo_tag_y, -e]) {
                             render_preview(convexity=20) 
                             linear_extrude(height=logo_etch+e) {
                                 mirror([1, 0, 0]) {
@@ -2247,16 +2258,16 @@ if (do_base_plate) {
                     
                     
                     // cross screws / punchouts
-                    translate([lever_axle_x, lever_axle_y, -5*e])
+                    translate([(lever_axle_x-pick_offset), lever_axle_y, -5*e])
                         cylinder_p(d=cross_screw_diameter+screw_play, 
                             h=base_thickness+tape_width+reel_wall+10*e);
-                    translate([spool_axle_x, spool_axle_y, -5*e])
+                    translate([(spool_axle_x-pick_offset), spool_axle_y, -5*e])
                         cylinder_p(d=cross_screw_diameter+screw_play, 
                             h=base_thickness+tape_width+reel_wall+10*e);
-                    translate([block_axle_x, block_axle_y, -5*e])
+                    translate([(block_axle_x-pick_offset), block_axle_y, -5*e])
                         cylinder_p(d=cross_screw_diameter+screw_play, 
                             h=base_thickness+tape_width+reel_wall+10*e);
-                    translate([(base_begin+tape_inset_begin)/2, -base_height/2, -5*e])
+                    translate([((base_begin-pick_offset)+(tape_inset_begin-pick_offset))/2, -base_height/2, -5*e])
                         cylinder_p(d=cross_screw_diameter+screw_play, 
                             h=base_thickness+tape_width+reel_wall+10*e);
                     
@@ -2339,20 +2350,20 @@ if (do_base_plate) {
                                 rr1=ratchet_diameter/2+spring_strength;
                                 polygon([
                                     each arc(
-                                    [spool_axle_x+cos(a0)*rr0, spool_axle_y+sin(a0)*rr0],
-                                    [spool_axle_x+cos(a0)*rr1, spool_axle_y+sin(a0)*rr1],
+                                    [(spool_axle_x-pick_offset)+cos(a0)*rr0, spool_axle_y+sin(a0)*rr0],
+                                    [(spool_axle_x-pick_offset)+cos(a0)*rr1, spool_axle_y+sin(a0)*rr1],
                                     180),
                                     each arc(
-                                    [spool_axle_x+cos(a0)*rr1, spool_axle_y+sin(a0)*rr1],
-                                    [spool_axle_x+cos(a1)*rr1, spool_axle_y+sin(a1)*rr1],
+                                    [(spool_axle_x-pick_offset)+cos(a0)*rr1, spool_axle_y+sin(a0)*rr1],
+                                    [(spool_axle_x-pick_offset)+cos(a1)*rr1, spool_axle_y+sin(a1)*rr1],
                                     a1-a0),
                                     each arc(
-                                    [spool_axle_x+cos(a1)*rr1, spool_axle_y+sin(a1)*rr1],
-                                    [spool_axle_x+cos(a1)*rr0, spool_axle_y+sin(a1)*rr0],
+                                    [(spool_axle_x-pick_offset)+cos(a1)*rr1, spool_axle_y+sin(a1)*rr1],
+                                    [(spool_axle_x-pick_offset)+cos(a1)*rr0, spool_axle_y+sin(a1)*rr0],
                                     180),
                                     each arc(
-                                    [spool_axle_x+cos(a1)*rr0, spool_axle_y+sin(a1)*rr0],
-                                    [spool_axle_x+cos(a0)*rr0, spool_axle_y+sin(a0)*rr0],
+                                    [(spool_axle_x-pick_offset)+cos(a1)*rr0, spool_axle_y+sin(a1)*rr0],
+                                    [(spool_axle_x-pick_offset)+cos(a0)*rr0, spool_axle_y+sin(a0)*rr0],
                                     a0-a1),
                                     
                                     
@@ -2362,7 +2373,7 @@ if (do_base_plate) {
                     }
                     
                     // spool axle groove
-                    translate([spool_axle_x, spool_axle_y, spool_axle_groove_z]) {
+                    translate([(spool_axle_x-pick_offset), spool_axle_y, spool_axle_groove_z]) {
                         difference() {
                             cylinder_p(d=spool_axle_diameter+2*wall, 
                                 h=spool_axle_groove_width);
@@ -2463,7 +2474,7 @@ if (do_inset) {
     
     color([0,0.7,0,0.6]) {
         translate([
-            debug_eff ? 0 : -base_begin+reel_x+reel_washer+gap, 
+            debug_eff ? 0 : -(base_begin-pick_offset)+reel_x+reel_washer+gap, 
             debug_eff ? 0 : reel_y-base_height-gap, 
             debug_eff ? emboss : (inset_flipped ? inset_height : 0)]) {
             rotate([inset_flipped ? 180 : 0, 0, 0]) {
@@ -2476,14 +2487,14 @@ if (do_inset) {
                             // main tape slide
                             translate([base_end, 0, 0]) {
                                 rotate([0, -90, 0]) {
-                                    linear_extrude(height=base_end-tape_inset_begin, 
+                                    linear_extrude(height=base_end-(tape_inset_begin-pick_offset), 
                                         convexity=10) {
                                         polygon(inset_profile(true));
                                     }
                                 }
                             }
                             // on-ramp
-                            translate([tape_inset_begin+e, 0, 0]) 
+                            translate([(tape_inset_begin-pick_offset)+e, 0, 0]) 
                                 rotate([0, 0, -90]) 
                                     translate([tape_bend_radius_begin, 0, 0]) 
                                         rotate_extrude(angle=tape_bend_angle, convexity=10, $fa=3) 
@@ -2506,7 +2517,7 @@ if (do_inset) {
                                 translate([0, 0, -e]) {
                                     beveled_extrude(height=inset_height, convexity=10)
                                         polygon([
-                                            [base_begin+base_length, -base_height+inset_play+phase2_play],
+                                            [(base_begin-pick_offset)+base_length, -base_height+inset_play+phase2_play],
                                             
                                             each arc(
                                             [base_end, 0],
@@ -2514,13 +2525,13 @@ if (do_inset) {
                                             90),
                                             
                                             each arc(
-                                            [base_begin+base_tape_edge, inset_edge+e],
-                                            [base_begin, -inset_edge],
+                                            [(base_begin-pick_offset)+base_tape_edge, inset_edge+e],
+                                            [(base_begin-pick_offset), -inset_edge],
                                             90),
-                                            [base_begin, -base_height+inset_play+phase2_play],
-                                            [tape_inset_begin-inset_play-phase2_play, 
+                                            [(base_begin-pick_offset), -base_height+inset_play+phase2_play],
+                                            [(tape_inset_begin-pick_offset)-inset_play-phase2_play, 
                                                 -base_height+inset_play+phase2_play],
-                                            [tape_inset_begin-tape_inset_slant-inset_play-phase2_play, 
+                                            [(tape_inset_begin-pick_offset)-tape_inset_slant-inset_play-phase2_play, 
                                                 -tape_max_height],
                                             [tape_inset_end+tape_inset_slant+inset_play+phase2_play, 
                                                 -tape_max_height],
@@ -2539,7 +2550,7 @@ if (do_inset) {
                                         // subtract supports
                                         support_y = [-tape_max_height+extrusion_width-layer_height,
                                                         inset_edge-layer_height];
-                                        for (x = [tape_inset_begin+support_grid/2:support_grid:extrusion_mount_x]) {
+                                        for (x = [(tape_inset_begin-pick_offset)+support_grid/2:support_grid:extrusion_mount_x]) {
                                             translate([x, support_y[0], 
                                                 inset_height-handle_pull_thickness-e]) 
                                                 cube([extrusion_width, 
@@ -2579,9 +2590,9 @@ if (do_inset) {
                                             [dog_x0-sprocket_pitch*2, inset_edge+e], 
                                             [dog_x0-sprocket_pitch*2+inset_edge, 
                                                     -tape_thickness*tape_inset_cover_tension-e],        
-                                            [base_begin, 
+                                            [(base_begin-pick_offset), 
                                                     -tape_thickness*tape_inset_cover_tension-e],        
-                                            [base_begin, inset_edge+e],        
+                                            [(base_begin-pick_offset), inset_edge+e],        
                                             ]);
                                     }
                                 }
@@ -2685,7 +2696,7 @@ if (do_inset) {
 
 if (do_lever) {
     color([1,0,0,0.6]) translate([
-        debug_eff ? 0 : -lever_axle_x-lever_axle_diameter-2*gap, 
+        debug_eff ? 0 : -(lever_axle_x-pick_offset)-lever_axle_diameter-2*gap, 
         debug_eff ? 0 : -base_height-extrusion_mount_strength
             -4*gap-lever_axle_y-lever_axle_diameter-lever_feed_y, 
         debug_eff ? layer_height+e : 0]) {
@@ -2693,9 +2704,9 @@ if (do_lever) {
         // ratchet spring tooth calculations
         tooth_r=ratchet_inner_diameter/2;
         tooth_angle=(ratchet_tooth_start+lever_spool_spring_tooth)*360/ratchet_teeth;
-        tooth_x=tooth_r*cos(tooth_angle)+spool_axle_x;
+        tooth_x=tooth_r*cos(tooth_angle)+(spool_axle_x-pick_offset);
         tooth_y=tooth_r*sin(tooth_angle)+spool_axle_y;
-        lever_spool_node=[lever_spool_x+lever_axle_x+cos(lever_spool_angle)*spring_strength/2, 
+        lever_spool_node=[lever_spool_x+(lever_axle_x-pick_offset)+cos(lever_spool_angle)*spring_strength/2, 
                 lever_spool_y+lever_axle_y+sin(lever_spool_angle)*spring_strength/2];
         tooth_relaxed = spring_relaxed_endpoint(
             lever_spool_node,
@@ -2727,7 +2738,7 @@ if (do_lever) {
                 beveled_extrude(height=lever_actuation_thickness, bevel=bevel_z, convexity=12) {
                     union() {
                         // the lever shape
-                        translate([lever_axle_x, lever_axle_y]) {
+                        translate([(lever_axle_x-pick_offset), lever_axle_y]) {
                             hull() {
                                 rotate([0, 0, lever_feed_angle])
                                     translate([lever_feed_leverage, 0])
@@ -2751,7 +2762,7 @@ if (do_lever) {
                 // dog lever
                 beveled_extrude(height=dog_lever_thickness, bevel=bevel_z, convexity=12) {
                     // leverage
-                    translate([lever_axle_x, lever_axle_y]) {
+                    translate([(lever_axle_x-pick_offset), lever_axle_y]) {
                         hull() {
                             rotate([0, 0, lever_dog_angle])
                                 translate([lever_dog_leverage, 0])
@@ -2761,7 +2772,7 @@ if (do_lever) {
                     }
                     // dog spring
                     spring_contour(
-                        [lever_tape_x+lever_axle_x, 
+                        [lever_tape_x+(lever_axle_x-pick_offset), 
                             lever_tape_y+lever_axle_y],
                         [dog_eff_x-dog_length+dog_slant*dog_height0, 
                                 dog_eff_y+dog_height0],
@@ -2787,7 +2798,7 @@ if (do_lever) {
                                     thorn(diameter=thorn_diameter, 
                                         length=thorn_length+e);
                 
-                translate([lever_axle_x, lever_axle_y, 0]) {
+                translate([(lever_axle_x-pick_offset), lever_axle_y, 0]) {
                     union() {
                         // make it full lever thickness at the axle
                         beveled_extrude(height=lever_thickness-layer_height*2, 
@@ -2805,7 +2816,7 @@ if (do_lever) {
             }
             union() {
                 // cutout axle
-                translate([lever_axle_x, lever_axle_y, -e])
+                translate([(lever_axle_x-pick_offset), lever_axle_y, -e])
                     beveled_extrude(height=lever_thickness-layer_height*2+2*e, 
                         bevel=bevel_z, angle=135) {
                         circle_p(d=lever_axle_diameter+axle_play+phase2_play);
@@ -2841,9 +2852,9 @@ if (do_blocking_spring) {
     
     tooth_r=ratchet_inner_diameter/2;
     tooth_angle=(blocking_spring_early+ratchet_tooth_start+blocking_spring_tooth)*360/ratchet_teeth;
-    tooth_x=tooth_r*cos(tooth_angle)+spool_axle_x;
+    tooth_x=tooth_r*cos(tooth_angle)+(spool_axle_x-pick_offset);
     tooth_y=tooth_r*sin(tooth_angle)+spool_axle_y;
-    blocking_node = [block_axle_x-fixture_axle/2+spring_strength, block_axle_y+spring_strength/2];
+    blocking_node = [(block_axle_x-pick_offset)-fixture_axle/2+spring_strength, block_axle_y+spring_strength/2];
     tooth_relaxed = spring_relaxed_endpoint(
         blocking_node,
         [tooth_x, tooth_y],
@@ -2858,7 +2869,7 @@ if (do_blocking_spring) {
 
     color([1, .5, 0, .5]) {
         translate([
-            debug_eff ? 0 :  -block_axle_x + spool_outer_diameter/2, 
+            debug_eff ? 0 :  -(block_axle_x-pick_offset) + spool_outer_diameter/2, 
             debug_eff ? 0 :  lever_axle_y-fixture_axle, 
             0]) {
             render_preview(convexity=6) 
@@ -2874,7 +2885,7 @@ if (do_blocking_spring) {
                 }
                 translate([0, 0, ])
                     beveled_extrude(height=tape_width+emboss) 
-                        translate([block_axle_x, block_axle_y])
+                        translate([(block_axle_x-pick_offset), block_axle_y])
                             circle_p(d=fixture_axle-fixture_play-phase2_play, $fn=6);
             }
         }
@@ -2886,7 +2897,7 @@ if (do_friction_wheel) {
     // spool right side
     color([0, 0, 1, 0.6])
     translate([
-        debug_eff ? spool_axle_x : -spool_inner_diameter, 
+        debug_eff ? (spool_axle_x-pick_offset) : -spool_inner_diameter, 
         debug_eff ? spool_axle_y : gap + spool_inner_diameter,
         debug_eff ? ratchet_thickness+2*e : tape_width-sprocket_gap
         ]) {
@@ -2955,7 +2966,7 @@ if (do_spool_left) {
     // spool left side with ratchet
     color([0.3, 0.3, 1, 0.4]) {
         translate([
-            debug_eff ? spool_axle_x : 0, 
+            debug_eff ? (spool_axle_x-pick_offset) : 0, 
             debug_eff ? spool_axle_y : max(lever_axle_y, spool_axle_y) 
             +lever_strength+base_margin+spool_outer_diameter/2+gap, 
             debug_eff ? 0 : spool_wall_left]) { 
@@ -3015,7 +3026,7 @@ if (do_spool_right) {
     // spool right side
     color([0.8, 0.8, 0.8, 0.7])
     translate([
-        debug_eff ? spool_axle_x : -spool_outer_diameter-gap, 
+        debug_eff ? (spool_axle_x-pick_offset) : -spool_outer_diameter-gap, 
         debug_eff ? spool_axle_y : max(lever_axle_y, spool_axle_y) 
             +lever_strength+base_margin+spool_outer_diameter/2+gap,
         debug_eff ? 0 : spool_width]) 
