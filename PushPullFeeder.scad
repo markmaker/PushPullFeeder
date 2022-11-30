@@ -343,6 +343,8 @@ spool_drum_strength=spool_drum_clamp_strength+wall;
 grip_teeth=60;
 // Spool grip, depth of teeth
 grip_depth=0.0;
+// Spool axle clip tension
+axle_groove_tension  = 0.3;
                    
 /* [ Cover Tape Spool, Ratchet ] */
 // Ratchet teeth depth
@@ -1760,13 +1762,13 @@ if (do_reel_counterpart && base_with_reel_holder) {
                                     reel_holder_thickness-spool_axle_groove_width-e]) {
                                     translate([0, 0, 0]) 
                                         cylinder_p(h=spool_axle_groove_width+2*e, 
-                                            d1=spool_axle_groove_outer, d2=spool_axle_groove_innner);
+                                            d1=spool_axle_groove_outer, d2=spool_axle_groove_innner-axle_groove_tension);
                                     translate([0, 0, -reel_holder_thickness]) 
                                         cylinder_p(h=reel_holder_thickness+e, 
                                             d=spool_axle_groove_outer);
                                     translate([-reel_holder_strength, 0, -e]) 
                                         cylinder_p(h=spool_axle_groove_width+2*e, 
-                                            d1=spool_axle_groove_outer, d2=spool_axle_groove_innner);
+                                            d1=spool_axle_groove_outer, d2=spool_axle_groove_innner-axle_groove_tension);
                                     translate([-reel_holder_strength, 0, -reel_holder_thickness]) 
                                         cylinder_p(h=reel_holder_thickness+e, 
                                             d=spool_axle_groove_outer);
@@ -3101,10 +3103,10 @@ if (do_spool_right) {
                             hull() {
                                 translate([0, 0, -e]) 
                                     cylinder_p(h=spool_axle_groove_width+2*e, 
-                                        d2=spool_axle_groove_outer, d1=spool_axle_groove_innner);
+                                        d2=spool_axle_groove_outer, d1=spool_axle_groove_innner-axle_groove_tension);
                                 translate([spool_axle_diameter, 0, -e]) 
                                     cylinder_p(h=spool_axle_groove_width+2*e, 
-                                        d2=spool_axle_groove_outer, d1=spool_axle_groove_innner);
+                                        d2=spool_axle_groove_outer, d1=spool_axle_groove_innner-axle_groove_tension);
                             }
                         }
                     }
