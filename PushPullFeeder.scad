@@ -275,6 +275,8 @@ tape_chute_tension_angle = 15;
 // Tape width adjustment for spent tape chute. Should be fixed at maximum tape_width_adjust = 0.25mm.
 tape_width_adjust_chute=0.25;
 tape_width_eff_chute=tape_width+tape_width_adjust_chute;
+// filet the top corners to reduce bridges (must be <= tape_max_height/2 to get a manifold)
+filet=tape_max_height/2;
                 
 /* [ Base Plate] */
 
@@ -794,8 +796,10 @@ tape_chute_reverse_contour = [
     [0, -base_thickness+emboss],
     [0, emboss+tape_width+reel_wall-layer_wall],
     [-tape_max_height, emboss+tape_width+reel_wall-layer_wall],
-    [-tape_max_height, -base_thickness+emboss+layer_wall],
-    [0, -base_thickness+emboss+layer_wall],
+    [-tape_max_height, -base_thickness+emboss+layer_wall+filet],
+    [-tape_max_height+filet, -base_thickness+emboss+layer_wall],
+    [-filet, -base_thickness+emboss+layer_wall],
+    [0, -base_thickness+emboss+layer_wall+filet],
     [0, -base_thickness+emboss],
 ];
 
